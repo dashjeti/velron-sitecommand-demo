@@ -265,7 +265,7 @@ export const assets: Equipment[] = [
   asset('Tipper T-40 #2',          'Tipper Truck', 'TP-4002',  'site-north',  'maintenance', 'hours', 9120, 9100, 'Workshop bay 2'),
   asset('Tipper T-40 #3',          'Tipper Truck', 'TP-4003',  'site-silver', 'running',     'hours', 5230, 6000, 'Silver haul loop'),
   asset('Grader G-14',             'Dozer/Grader', 'GR-014',   'site-east',   'running',     'hours', 3010, 3500, 'Access roads'),
-  asset('Dozer D-8',               'Dozer/Grader', 'DZ-008',   'site-falcon', 'breakdown',   'hours', 7770, 8000, 'Workshop'),
+  asset('Dozer D-8',               'Dozer/Grader', 'DZ-008',   'site-falcon', 'breakdown',   'hours', 7770, 8000, 'Falcon workshop bay'),
   asset('Slurry pump SP-6 #1',     'Pump',         null,       'site-north',  'running',     'hours', 11200, 12000, 'TSF 1 pump station'),
   asset('Slurry pump SP-6 #2',     'Pump',         null,       'site-north',  'running',     'hours', 10940, 11000, 'TSF 2 pump station'),
   asset('Slurry pump SP-4',        'Pump',         null,       'site-falcon', 'running',     'hours', 8450, 9000, 'Main TSF'),
