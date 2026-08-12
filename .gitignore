@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env.local
+.env.*.local
+supabase/.temp/
+tsconfig.tsbuildinfo
+
+# Local-only test credentials, never commit
+*.local.md
+*.log
+.DS_Store
+.gstack/
+billnick-intake/node_modules/
+billnick-intake/dist/
+velron-discovery-hub/node_modules/
+velron-discovery-hub/dist/

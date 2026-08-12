@@ -1,0 +1,28 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "boip-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "autoPort": true,
+      "port": 5173
+    },
+    {
+      "name": "intake-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "billnick-intake",
+      "autoPort": true,
+      "port": 5175
+    },
+    {
+      "name": "velron-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "velron-discovery-hub",
+      "autoPort": true,
+      "port": 5174
+    }
+  ]
+}
