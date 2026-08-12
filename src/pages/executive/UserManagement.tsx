@@ -240,7 +240,7 @@ export default function UserManagement() {
                     id="u-email"
                     className="input pl-9 disabled:bg-ink-50 disabled:text-ink-400"
                     type="email"
-                    placeholder="person@billnickengineering.co.zw"
+                    placeholder="person@sitecommand.demo"
                     value={email}
                     disabled={!!editing}
                     onChange={(e) => setEmail(e.target.value)}

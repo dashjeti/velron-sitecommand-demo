@@ -138,7 +138,7 @@ function packToText(pack: MeetingPack, c: AiPackContent): string {
   ]
 
   return [
-    'BILLNICK ENGINEERING',
+    'SITECOMMAND OPERATIONS GROUP',
     `${pack.periodLabel.toUpperCase()} MEETING PACK`,
     '',
     `Pack type: ${pack.periodType === 'monthly' ? 'Monthly' : 'Quarterly'}`,
