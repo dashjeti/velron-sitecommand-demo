@@ -178,12 +178,12 @@ export default function SiteManagement() {
             <div className="space-y-4 p-6">
               <div>
                 <label className="label" htmlFor="s-name">Site name</label>
-                <input id="s-name" className="input" placeholder="e.g. Muriel Mine" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+                <input id="s-name" className="input" placeholder="e.g. Copper Flats Mine" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <label className="label" htmlFor="s-loc">Location</label>
-                  <input id="s-loc" className="input" placeholder="e.g. Bindura" value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} />
+                  <input id="s-loc" className="input" placeholder="e.g. Metro City" value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} />
                 </div>
                 <div>
                   <label className="label" htmlFor="s-region">Region</label>

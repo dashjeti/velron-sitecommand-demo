@@ -46,8 +46,7 @@ export default function SheqRecordForm() {
   })
 
   const [type, setType] = useState<SheqType>('inspection')
-  // site_id is a uuid column, so the picker must offer real Supabase sites.
-  // Mock ids like 'muriel' are rejected by Postgres.
+  // The picker offers the sites from the demo store.
   const [siteId, setSiteId] = useState(user?.siteId ?? '')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')

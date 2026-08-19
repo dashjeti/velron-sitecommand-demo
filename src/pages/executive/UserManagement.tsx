@@ -21,8 +21,10 @@ import type { Role } from '../../types'
 
 const ROLES: { value: Role; label: string }[] = [
   { value: 'supervisor', label: 'Site Supervisor' },
+  { value: 'ops_manager', label: 'Operations Manager' },
   { value: 'workshop', label: 'Workshop Manager' },
   { value: 'sheq', label: 'SHEQ Officer' },
+  { value: 'sheq_manager', label: 'SHEQ Manager' },
   { value: 'project', label: 'Project Manager' },
   { value: 'executive', label: 'Executive' },
   { value: 'client', label: 'Client' },
@@ -30,9 +32,21 @@ const ROLES: { value: Role; label: string }[] = [
 
 const roleLabel = (r: Role | null) => ROLES.find((x) => x.value === r)?.label ?? 'No role'
 
+// What each role is for, shown under the picker so the right one gets chosen.
+const roleHints: Record<Role, string> = {
+  supervisor: 'Submits the daily site report for one site.',
+  ops_manager: 'Oversees every site supervisor and their daily reports across all sites.',
+  workshop: 'Runs the asset register, breakdowns and servicing.',
+  sheq: 'Raises SHEQ records. Assign a site, or leave group-wide.',
+  sheq_manager: 'Oversees every SHEQ officer and their records across all sites.',
+  project: 'Multi-site production, equipment and risk overview.',
+  executive: 'Full access, including users, sites and meeting packs.',
+  client: 'Read-only portal with the documents published for their site.',
+}
+
 // Roles that can be tied to a single site; others are group-wide. A supervisor
-// must have a site; a SHEQ officer may have one (per-site officer) or none
-// (group-wide SHEQ manager).
+// must have a site; a SHEQ officer may have one (per-site officer) or none.
+// The two manager roles oversee every site, so they are never site-assigned.
 const SITE_ROLES: Role[] = ['supervisor', 'sheq', 'client']
 
 export default function UserManagement() {
@@ -89,7 +103,7 @@ export default function UserManagement() {
   }
 
   async function save() {
-    if (!editing && !email.trim()) { setFormError('Enter an email address.'); return }
+    if (!email.trim()) { setFormError('Enter an email address.'); return }
     if (!fullName.trim()) { setFormError('Enter the person\'s name.'); return }
     if ((role === 'supervisor' || role === 'client') && !siteId) { setFormError(`A ${roleLabel(role)} must be assigned to a site.`); return }
 
@@ -97,7 +111,13 @@ export default function UserManagement() {
     const finalSite = SITE_ROLES.includes(role) ? siteId : null
 
     if (editing) {
-      const { error: e } = await updateUser({ userId: editing.id, fullName: fullName.trim(), role, siteId: finalSite })
+      const { error: e } = await updateUser({
+        userId: editing.id,
+        fullName: fullName.trim(),
+        role,
+        siteId: finalSite,
+        email: email.trim(),
+      })
       setBusy(false)
       if (e) { setFormError(e); return }
       setShowForm(false)
@@ -238,20 +258,24 @@ export default function UserManagement() {
                   <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-300" />
                   <input
                     id="u-email"
-                    className="input pl-9 disabled:bg-ink-50 disabled:text-ink-400"
+                    className="input pl-9"
                     type="email"
                     placeholder="person@sitecommand.demo"
                     value={email}
-                    disabled={!!editing}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                {editing && <p className="mt-1 text-xs text-ink-400">Email cannot be changed here.</p>}
+                {editing && (
+                  <p className="mt-1 text-xs text-ink-400">
+                    Changing this changes their sign-in email immediately. Their password stays the
+                    same. Tell them before you save, or they will try the old one.
+                  </p>
+                )}
               </div>
 
               <div>
                 <label className="label" htmlFor="u-name">Full name</label>
-                <input id="u-name" className="input" placeholder="e.g. Tendai Chikore" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                <input id="u-name" className="input" placeholder="e.g. Sam Carter" value={fullName} onChange={(e) => setFullName(e.target.value)} />
               </div>
 
               <div>
@@ -259,6 +283,7 @@ export default function UserManagement() {
                 <select id="u-role" className="input" value={role} onChange={(e) => setRole(e.target.value as Role)}>
                   {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                 </select>
+                <p className="mt-1 text-xs text-ink-400">{roleHints[role]}</p>
               </div>
 
               <div>

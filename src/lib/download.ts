@@ -85,10 +85,10 @@ export function printBrandedDocument(opts: {
 <style>
   * { box-sizing: border-box; }
   body { font-family: Arial, Helvetica, sans-serif; color: #181c25; margin: 0; padding: 40px 48px; line-height: 1.6; }
-  .brand { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #f57e20; margin: 0; }
+  .brand { font-size: 11px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #1d4ed8; margin: 0; }
   h1 { font-size: 26px; margin: 4px 0 2px; }
   .sub { color: #5a616f; font-size: 14px; margin: 0 0 18px; }
-  .rule { height: 3px; background: #f57e20; border-radius: 2px; margin: 0 0 22px; }
+  .rule { height: 3px; background: #1d4ed8; border-radius: 2px; margin: 0 0 22px; }
   table.meta { border-collapse: collapse; margin: 0 0 24px; font-size: 13px; }
   table.meta td { padding: 3px 0; }
   .mk { color: #8b93a3; padding-right: 24px !important; }

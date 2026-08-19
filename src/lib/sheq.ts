@@ -1,4 +1,5 @@
-import { sheqRecords, certificates, newId, users } from '../demo/db'
+import { sheqRecords, sheqDetails, certificates, newId, users } from '../demo/db'
+import type { DemoSheqDetail } from '../demo/db'
 import type { Certificate, Severity, SheqRecord, SheqType } from '../types'
 
 /** Demo implementation of the SHEQ + certificates API over the in-memory store. */
@@ -23,7 +24,7 @@ export interface SheqInput {
 }
 
 export async function submitSheqRecord(input: SheqInput): Promise<{ id: string | null; error: string | null }> {
-  const raisedBy = users.find((u) => u.id === input.conductedById)?.fullName ?? 'Site staff'
+  const author = users.find((u) => u.id === input.conductedById)
   const rec: SheqRecord = {
     id: newId('sh'),
     type: input.recordType,
@@ -32,16 +33,27 @@ export async function submitSheqRecord(input: SheqInput): Promise<{ id: string |
     severity: input.severity,
     status: 'open',
     date: new Date().toISOString().slice(0, 10),
-    raisedBy,
+    raisedBy: author?.fullName ?? 'Site staff',
+    raisedById: author?.id ?? null,
     attachments: 0,
   }
   sheqRecords.unshift(rec)
+  sheqDetails.set(rec.id, {
+    description: input.description ?? null,
+    findings: input.findings ?? null,
+    correctiveAction: input.correctiveAction ?? null,
+    dueDate: input.dueDate ?? null,
+    attachmentNames: [],
+  })
   return { id: rec.id, error: null }
 }
 
 export async function uploadSheqAttachments(recordId: string, files: File[]): Promise<void> {
   const rec = sheqRecords.find((r) => r.id === recordId)
-  if (rec) rec.attachments += files.length
+  if (!rec) return
+  rec.attachments += files.length
+  const detail = sheqDetails.get(recordId)
+  if (detail) detail.attachmentNames.push(...files.map((f) => f.name))
 }
 
 export async function deleteSheqRecord(id: string): Promise<{ error: string | null }> {
@@ -109,4 +121,69 @@ export function daysUntilExpiry(expiryDate: string): number {
   today.setHours(0, 0, 0, 0)
   const expiry = new Date(expiryDate)
   return Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+// ── Full record detail, for the SHEQ manager reviewing what an officer wrote ──
+
+export interface SheqAttachment {
+  id: string
+  fileName: string
+  storagePath: string
+}
+
+export interface SheqRecordDetail {
+  id: string
+  type: SheqType
+  siteId: string
+  title: string
+  severity: Severity
+  status: SheqRecord['status']
+  date: string
+  dueDate: string | null
+  closedAt: string | null
+  raisedBy: string
+  description: string | null
+  findings: string | null
+  correctiveAction: string | null
+  attachments: SheqAttachment[]
+}
+
+/** One SHEQ record in full, including everything the officer typed and any
+ *  files they attached. The register only carries the summary fields. */
+export async function fetchSheqRecordDetail(id: string): Promise<SheqRecordDetail | null> {
+  const rec = sheqRecords.find((r) => r.id === id)
+  if (!rec) return null
+  const detail: DemoSheqDetail | undefined = sheqDetails.get(id)
+  return {
+    id: rec.id,
+    type: rec.type,
+    siteId: rec.siteId,
+    title: rec.title,
+    severity: rec.severity,
+    status: rec.status,
+    date: rec.date,
+    dueDate: detail?.dueDate ?? null,
+    closedAt: null,
+    raisedBy: rec.raisedBy || 'Not recorded',
+    description: detail?.description ?? null,
+    findings: detail?.findings ?? null,
+    correctiveAction: detail?.correctiveAction ?? null,
+    attachments: (detail?.attachmentNames ?? []).map((name, i) => ({
+      id: `${rec.id}-att-${i}`,
+      fileName: name,
+      storagePath: name,
+    })),
+  }
+}
+
+/** Demo stand-in for a signed storage link: opens a placeholder document. */
+export async function sheqAttachmentUrl(storagePath: string): Promise<string | null> {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400">
+    <rect width="640" height="400" fill="#0f172a"/>
+    <text x="32" y="60" font-family="Arial" font-size="22" fill="#ffffff" font-weight="bold">Demo attachment</text>
+    <text x="32" y="96" font-family="Arial" font-size="15" fill="#94a3b8">${storagePath.replace(/[<>&]/g, '')}</text>
+    <text x="32" y="360" font-family="Arial" font-size="13" fill="#64748b">In the live product this opens the file the officer uploaded.</text>
+  </svg>`
+  const blob = new Blob([svg], { type: 'image/svg+xml' })
+  return URL.createObjectURL(blob)
 }

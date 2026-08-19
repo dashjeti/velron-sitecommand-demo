@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   CalendarDays,
   CloudSun,
@@ -27,6 +28,9 @@ export default function Reports() {
   const [filterSite, setFilterSite] = useState('')
   const [detail, setDetail] = useState<ReportDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  // ?report=<id> deep link, so a dashboard row can open one report directly.
+  const [params, setParams] = useSearchParams()
+  const deepLinkId = params.get('report')
 
   useEffect(() => { reloadSites() }, [reloadSites])
 
@@ -35,10 +39,31 @@ export default function Reports() {
     fetchAllReports(filterSite || undefined).then((r) => { setRows(r); setLoading(false) })
   }, [filterSite])
 
+  useEffect(() => {
+    if (!deepLinkId) return
+    let cancelled = false
+    setDetailLoading(true)
+    fetchReportDetail(deepLinkId).then((d) => {
+      if (cancelled) return
+      setDetail(d)
+      setDetailLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [deepLinkId])
+
   async function openDetail(id: string) {
     setDetailLoading(true)
     setDetail(await fetchReportDetail(id))
     setDetailLoading(false)
+  }
+
+  function closeDetail() {
+    setDetail(null)
+    if (deepLinkId) {
+      const next = new URLSearchParams(params)
+      next.delete('report')
+      setParams(next, { replace: true })
+    }
   }
 
   return (
@@ -69,6 +94,7 @@ export default function Reports() {
                 <tr className="border-b border-ink-100 text-left text-xs uppercase tracking-wider text-ink-400">
                   <th className="pb-2 pr-3 font-semibold">Date</th>
                   <th className="px-3 pb-2 font-semibold">Site</th>
+                  <th className="px-3 pb-2 font-semibold">Submitted by</th>
                   <th className="px-3 pb-2 font-semibold">Actual / Target</th>
                   <th className="px-3 pb-2 text-right font-semibold">Variance</th>
                 </tr>
@@ -82,6 +108,9 @@ export default function Reports() {
                     <tr key={r.id} onClick={() => openDetail(r.id)} className="cursor-pointer border-b border-ink-50 last:border-0 hover:bg-ink-50/50">
                       <td className="py-3 pr-3 font-semibold text-ink-800">{pretty(r.report_date)}</td>
                       <td className="px-3 py-3 text-ink-600">{r.siteName}</td>
+                      <td className="px-3 py-3 text-ink-600">
+                        {r.submittedBy ?? <span className="text-ink-300">Not recorded</span>}
+                      </td>
                       <td className="px-3 py-3 text-ink-600">{r.production_tonnes_actual.toLocaleString()}t / {r.production_tonnes_target.toLocaleString()}t</td>
                       <td className="px-3 py-3 text-right">
                         <span className={`pill ${variance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
@@ -104,14 +133,14 @@ export default function Reports() {
       )}
 
       {detail && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900/60 p-4 pt-8 backdrop-blur-sm" onClick={() => setDetail(null)}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink-900/60 p-4 pt-8 backdrop-blur-sm" onClick={closeDetail}>
           <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-ink-100 px-6 py-4">
               <div>
                 <h2 className="font-bold text-ink-900">Daily Report</h2>
                 <p className="text-xs text-ink-400">{pretty(detail.report_date)}</p>
               </div>
-              <button onClick={() => setDetail(null)} aria-label="Close" className="rounded-lg p-1.5 text-ink-400 hover:bg-ink-50">
+              <button onClick={closeDetail} aria-label="Close" className="rounded-lg p-1.5 text-ink-400 hover:bg-ink-50">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -184,7 +213,7 @@ export default function Reports() {
             </div>
 
             <div className="border-t border-ink-100 px-6 py-4">
-              <button onClick={() => setDetail(null)} className="btn-outline w-full">Close</button>
+              <button onClick={closeDetail} className="btn-outline w-full">Close</button>
             </div>
           </div>
         </div>

@@ -12,6 +12,9 @@ import AssetManagement from './pages/workshop/AssetManagement'
 import SheqDashboard from './pages/sheq/SheqDashboard'
 import SheqRecordForm from './pages/sheq/SheqRecordForm'
 import TsfLimits from './pages/sheq/TsfLimits'
+import SheqManagerDashboard from './pages/sheq/SheqManagerDashboard'
+import SheqSubmittedRecords from './pages/sheq/SheqSubmittedRecords'
+import OpsManagerDashboard from './pages/ops/OpsManagerDashboard'
 import ProjectDashboard from './pages/project/ProjectDashboard'
 import ExecutiveDashboard from './pages/executive/ExecutiveDashboard'
 import MeetingPacks from './pages/executive/MeetingPacks'
@@ -22,18 +25,23 @@ import ClientPortal from './pages/client/ClientPortal'
 
 const homeByRole: Record<Role, string> = {
   supervisor: '/supervisor',
+  ops_manager: '/ops-manager',
   workshop: '/workshop',
   sheq: '/sheq',
+  sheq_manager: '/sheq-manager',
   project: '/project',
   executive: '/executive',
   client: '/client',
 }
 
-function Protected({ allow, children }: { allow: Role; children: React.ReactNode }) {
+/** Guards a route. `allow` takes a list when a page is shared, for example the
+ *  SHEQ pages, which both the SHEQ officer and the SHEQ manager work in. */
+function Protected({ allow, children }: { allow: Role | Role[]; children: React.ReactNode }) {
   const { user, loading } = useAuth()
   if (loading) return <div className="flex h-screen items-center justify-center bg-ink-50"><span className="text-sm text-ink-400">Loading…</span></div>
   if (!user) return <Navigate to="/login" replace />
-  if (user.role !== allow) return <Navigate to={homeByRole[user.role]} replace />
+  const allowed = Array.isArray(allow) ? allow : [allow]
+  if (!allowed.includes(user.role)) return <Navigate to={homeByRole[user.role]} replace />
   return <Layout>{children}</Layout>
 }
 
@@ -75,9 +83,16 @@ export default function App() {
       <Route path="/workshop/assets" element={<Protected allow="workshop"><AssetManagement /></Protected>} />
       <Route path="/workshop/breakdown" element={<Protected allow="workshop"><BreakdownReport /></Protected>} />
 
-      <Route path="/sheq" element={<Protected allow="sheq"><SheqDashboard /></Protected>} />
-      <Route path="/sheq/record" element={<Protected allow="sheq"><SheqRecordForm /></Protected>} />
-      <Route path="/sheq/tsf-limits" element={<Protected allow="sheq"><TsfLimits /></Protected>} />
+      {/* Shared by the SHEQ officer and the SHEQ manager who oversees them. */}
+      <Route path="/sheq" element={<Protected allow={['sheq', 'sheq_manager']}><SheqDashboard /></Protected>} />
+      <Route path="/sheq/record" element={<Protected allow={['sheq', 'sheq_manager']}><SheqRecordForm /></Protected>} />
+      <Route path="/sheq/tsf-limits" element={<Protected allow={['sheq', 'sheq_manager']}><TsfLimits /></Protected>} />
+
+      <Route path="/sheq-manager" element={<Protected allow="sheq_manager"><SheqManagerDashboard /></Protected>} />
+      <Route path="/sheq-manager/records" element={<Protected allow="sheq_manager"><SheqSubmittedRecords /></Protected>} />
+
+      <Route path="/ops-manager" element={<Protected allow="ops_manager"><OpsManagerDashboard /></Protected>} />
+      <Route path="/ops-manager/reports" element={<Protected allow="ops_manager"><Reports /></Protected>} />
 
       <Route path="/project" element={<Protected allow="project"><ProjectDashboard /></Protected>} />
 

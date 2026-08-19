@@ -384,7 +384,7 @@ export default function AssetManagement() {
               <FormField label="Asset name" error={errors.name}>
                 <input
                   className={inputCls(errors.name)}
-                  placeholder="e.g. Toyota Hilux (BNE 010)"
+                  placeholder="e.g. Tipper T-40 #4"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 />
@@ -394,7 +394,7 @@ export default function AssetManagement() {
                 <FormField label="Registration">
                   <input
                     className="input"
-                    placeholder="e.g. ADY 9290"
+                    placeholder="e.g. TP-4004"
                     value={form.registration}
                     onChange={(e) => setForm((f) => ({ ...f, registration: e.target.value }))}
                   />

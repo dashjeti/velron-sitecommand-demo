@@ -30,12 +30,43 @@ interface Alert {
 
 /** Which alert kinds each role should see. */
 const relevance: Record<Role, string[]> = {
-  executive: ['production', 'fleet', 'sheq', 'cert', 'tsf'],
-  project:   ['production', 'fleet', 'sheq', 'cert', 'tsf'],
-  workshop:  ['fleet'],
-  sheq:      ['sheq', 'cert'],
-  supervisor:['production', 'tsf', 'fleet'],
-  client:    ['production'],
+  executive:    ['production', 'fleet', 'sheq', 'cert', 'tsf'],
+  project:      ['production', 'fleet', 'sheq', 'cert', 'tsf'],
+  ops_manager:  ['production', 'fleet', 'tsf'],
+  workshop:     ['fleet'],
+  sheq:         ['sheq', 'cert'],
+  sheq_manager: ['sheq', 'cert'],
+  supervisor:   ['production', 'tsf', 'fleet'],
+  client:       ['production'],
+}
+
+/** Home page per role. Must match homeByRole in App.tsx. */
+const homeByRole: Record<Role, string> = {
+  supervisor:   '/supervisor',
+  ops_manager:  '/ops-manager',
+  workshop:     '/workshop',
+  sheq:         '/sheq',
+  sheq_manager: '/sheq-manager',
+  project:      '/project',
+  executive:    '/executive',
+  client:       '/client',
+}
+
+/**
+ * Route prefixes each role can actually open, mirroring the guards in App.tsx.
+ * An alert often points at a page the reader cannot reach (a SHEQ alert seen by
+ * an executive, say), so this decides where the click really goes instead of
+ * letting the route guard bounce them.
+ */
+const reachableByRole: Record<Role, string[]> = {
+  supervisor:   ['/supervisor'],
+  ops_manager:  ['/ops-manager'],
+  workshop:     ['/workshop'],
+  sheq:         ['/sheq'],
+  sheq_manager: ['/sheq-manager', '/sheq'],
+  project:      ['/project'],
+  executive:    ['/executive'],
+  client:       ['/client'],
 }
 
 const toneStyles: Record<Tone, string> = {
@@ -222,20 +253,13 @@ export default function NotificationBell() {
       .sort((a, b) => ranked[a.tone] - ranked[b.tone])
   }, [user, siteViews, tsfByFacility, equipment, sheq, certs, siteName])
 
-  // Routes a client or supervisor cannot reach: send them to their own home instead
-  const homeByRole: Record<Role, string> = {
-    supervisor: '/supervisor',
-    workshop: '/workshop',
-    sheq: '/sheq',
-    project: '/project',
-    executive: '/executive',
-    client: '/client',
-  }
-
   const go = (to: string) => {
     setOpen(false)
-    const reachable = to.startsWith(`/${user?.role}`) || user?.role === 'executive' || user?.role === 'project'
-    navigate(reachable ? to : homeByRole[user!.role])
+    if (!user) return
+    const canOpen = reachableByRole[user.role].some(
+      (prefix) => to === prefix || to.startsWith(`${prefix}/`),
+    )
+    navigate(canOpen ? to : homeByRole[user.role])
   }
 
   const count = alerts.length

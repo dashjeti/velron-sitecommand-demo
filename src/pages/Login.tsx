@@ -2,10 +2,12 @@ import { useNavigate } from 'react-router-dom'
 import {
   ClipboardList,
   Crown,
+  FileBadge,
   FileText,
   Gauge,
   ShieldCheck,
   Truck,
+  Users,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useAuth } from '../state/AuthContext'
@@ -13,15 +15,17 @@ import { SiteCommandLogo, VelronLogo } from '../components/Brand'
 import { users } from '../demo/db'
 
 const roleMeta: Record<string, { icon: ReactNode; blurb: string }> = {
-  executive:  { icon: <Crown className="h-5 w-5" />,         blurb: 'Command centre, meeting packs, sites & users' },
-  project:    { icon: <Gauge className="h-5 w-5" />,         blurb: 'Multi-site performance, risks & client documents' },
-  supervisor: { icon: <ClipboardList className="h-5 w-5" />, blurb: 'Daily site report: production, weather, TSF readings' },
-  workshop:   { icon: <Truck className="h-5 w-5" />,         blurb: 'Asset register, services & breakdown logging' },
-  sheq:       { icon: <ShieldCheck className="h-5 w-5" />,   blurb: 'Incidents, certificates & TSF safety limits' },
-  client:     { icon: <FileText className="h-5 w-5" />,      blurb: 'The read-only portal your clients see' },
+  executive:    { icon: <Crown className="h-5 w-5" />,         blurb: 'Command centre, meeting packs, sites & users' },
+  ops_manager:  { icon: <Users className="h-5 w-5" />,         blurb: 'Every supervisor & daily report, group-wide' },
+  project:      { icon: <Gauge className="h-5 w-5" />,         blurb: 'Multi-site performance, risks & client documents' },
+  supervisor:   { icon: <ClipboardList className="h-5 w-5" />, blurb: 'Daily site report: production, weather, TSF readings' },
+  workshop:     { icon: <Truck className="h-5 w-5" />,         blurb: 'Asset register, services & breakdown logging' },
+  sheq:         { icon: <ShieldCheck className="h-5 w-5" />,   blurb: 'Incidents, certificates & TSF safety limits' },
+  sheq_manager: { icon: <FileBadge className="h-5 w-5" />,     blurb: 'Oversight of every SHEQ officer & their records' },
+  client:       { icon: <FileText className="h-5 w-5" />,      blurb: 'The read-only portal your clients see' },
 }
 
-const ROLE_ORDER = ['executive', 'project', 'supervisor', 'workshop', 'sheq', 'client']
+const ROLE_ORDER = ['executive', 'ops_manager', 'project', 'supervisor', 'workshop', 'sheq', 'sheq_manager', 'client']
 
 export default function Login() {
   const { loginAs } = useAuth()

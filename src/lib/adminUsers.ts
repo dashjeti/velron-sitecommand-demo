@@ -57,9 +57,17 @@ export async function updateUser(input: {
   fullName: string
   role: Role
   siteId: string | null
+  /** New sign-in email. Omit or pass the current one to leave it unchanged. */
+  email?: string
 }): Promise<{ error: string | null }> {
   const u = users.find((x) => x.id === input.userId)
   if (!u) return { error: 'User not found.' }
+  if (input.email && input.email.toLowerCase() !== u.email.toLowerCase()) {
+    if (users.some((x) => x.id !== u.id && x.email.toLowerCase() === input.email!.toLowerCase())) {
+      return { error: 'Another user already has that email address.' }
+    }
+    u.email = input.email
+  }
   u.fullName = input.fullName
   u.role = input.role
   u.siteId = input.siteId

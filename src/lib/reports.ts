@@ -122,10 +122,14 @@ export interface AllReportRow {
   report_date: string
   siteId: string
   siteName: string
+  /** Supervisor who submitted it. null when their account was removed. */
+  submittedBy: string | null
   production_tonnes_actual: number
   production_tonnes_target: number
 }
 
+/** All submitted daily reports across every site, for the Submitted Reports page
+ *  shared by executives and the Operations Manager. */
 export async function fetchAllReports(siteId?: string, limit = 200): Promise<AllReportRow[]> {
   return reports
     .filter((r) => !siteId || r.siteId === siteId)
@@ -135,10 +139,81 @@ export async function fetchAllReports(siteId?: string, limit = 200): Promise<All
       id: r.id,
       report_date: r.date,
       siteId: r.siteId,
-      siteName: sites.find((s) => s.id === r.siteId)?.name ?? '—',
+      siteName: sites.find((s) => s.id === r.siteId)?.name ?? 'Unknown site',
+      submittedBy: users.find((u) => u.id === r.supervisorId)?.fullName ?? null,
       production_tonnes_actual: r.actual,
       production_tonnes_target: r.target,
     }))
+}
+
+export interface SubmissionRow {
+  id: string
+  reportDate: string
+  /** When it was actually submitted, so a manager can see late reporting. */
+  createdAt: string
+  siteId: string
+  siteName: string
+  /** null when the author's account was removed, or on pre-attribution rows. */
+  supervisorId: string | null
+  supervisorName: string | null
+  actual: number
+  target: number
+}
+
+/**
+ * Daily reports from `fromDate` onwards with site and supervisor attribution.
+ * Feeds the Operations Manager dashboard, which has to answer "who reported,
+ * who has not, and how late".
+ */
+export async function fetchSubmissionsSince(fromDate: string, limit = 500): Promise<SubmissionRow[]> {
+  return reports
+    .filter((r) => r.date >= fromDate)
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.createdAt < b.createdAt ? 1 : -1))
+    .slice(0, limit)
+    .map((r) => {
+      const supervisor = users.find((u) => u.id === r.supervisorId)
+      return {
+        id: r.id,
+        reportDate: r.date,
+        createdAt: r.createdAt,
+        siteId: r.siteId,
+        siteName: sites.find((s) => s.id === r.siteId)?.name ?? 'Unknown site',
+        supervisorId: supervisor?.id ?? null,
+        supervisorName: supervisor?.fullName ?? null,
+        actual: r.actual,
+        target: r.target,
+      }
+    })
+}
+
+export interface DelayRow {
+  id: string
+  reportDate: string
+  siteId: string
+  siteName: string
+  type: string
+  hours: number
+  description: string
+}
+
+/** Delays and stoppages logged across every site since `fromDate`. */
+export async function fetchDelaysSince(fromDate: string, limit = 200): Promise<DelayRow[]> {
+  const out: DelayRow[] = []
+  for (const r of reports) {
+    if (r.date < fromDate) continue
+    r.delays.forEach((d, i) => {
+      out.push({
+        id: `${r.id}-delay-${i}`,
+        reportDate: r.date,
+        siteId: r.siteId,
+        siteName: sites.find((s) => s.id === r.siteId)?.name ?? 'Unknown site',
+        type: d.type,
+        hours: d.hours,
+        description: d.description,
+      })
+    })
+  }
+  return out.sort((a, b) => b.hours - a.hours).slice(0, limit)
 }
 
 export interface ReportDetail {
@@ -226,6 +301,7 @@ export async function submitDailyReport(input: DailyReportInput): Promise<{ erro
     siteId: input.siteId,
     date: today,
     createdAt: new Date().toISOString(),
+    supervisorId: submitter?.id ?? null,
     tonnesProcessed: input.tonnesProcessed,
     actual: input.actualOutput,
     target: input.targetTonnes,

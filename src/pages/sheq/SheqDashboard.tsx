@@ -22,6 +22,7 @@ import {
   Panel,
   Progress,
   SeverityBadge,
+  SheqStatusBadge,
 } from '../../components/ui'
 import { VBars, chartColors } from '../../components/charts'
 import { useData } from '../../state/DataContext'
@@ -287,14 +288,7 @@ export default function SheqDashboard() {
                   </div>
                   <div className="flex items-center gap-2 pl-12 sm:pl-0">
                     <SeverityBadge severity={r.severity} />
-                    <span className={`pill capitalize ${
-                      r.status === 'closed'      ? 'bg-emerald-100 text-emerald-700' :
-                      r.status === 'overdue'     ? 'bg-red-100 text-red-700' :
-                      r.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                                                   'bg-amber-100 text-amber-700'
-                    }`}>
-                      {r.status === 'in_progress' ? 'In Progress' : r.status.charAt(0).toUpperCase() + r.status.slice(1)}
-                    </span>
+                    <SheqStatusBadge status={r.status} />
                   </div>
                 </button>
               ))}

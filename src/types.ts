@@ -1,7 +1,11 @@
 export type Role =
   | 'supervisor'
+  /** Oversees the site supervisors and every daily report they submit. */
+  | 'ops_manager'
   | 'workshop'
   | 'sheq'
+  /** Oversees the per-site SHEQ officers and every record they raise. */
+  | 'sheq_manager'
   | 'project'
   | 'executive'
   | 'client'
@@ -126,6 +130,9 @@ export interface SheqRecord {
   status: 'open' | 'in_progress' | 'closed' | 'overdue'
   date: string
   raisedBy: string
+  /** users.id of the officer who raised it. null on rows whose author was
+   *  removed, or on rows created before attribution existed. */
+  raisedById: string | null
   attachments: number
 }
 

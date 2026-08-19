@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { ArrowDownRight, ArrowUpRight, ChevronRight } from 'lucide-react'
-import type { EquipmentStatus, Severity, SiteStatus } from '../types'
+import type { EquipmentStatus, Severity, SheqRecord, SiteStatus } from '../types'
 
 // ---------------------------------------------------------------------------
 // KPI tile
@@ -152,6 +152,18 @@ export function SeverityBadge({ severity }: { severity: Severity }) {
       <span className="capitalize">{severity}</span>
     </span>
   )
+}
+
+const sheqStatusStyles: Record<SheqRecord['status'], { c: string; label: string }> = {
+  open:        { c: 'bg-amber-100 text-amber-700', label: 'Open' },
+  in_progress: { c: 'bg-blue-100 text-blue-700', label: 'In Progress' },
+  overdue:     { c: 'bg-red-100 text-red-700', label: 'Overdue' },
+  closed:      { c: 'bg-emerald-100 text-emerald-700', label: 'Closed' },
+}
+
+export function SheqStatusBadge({ status }: { status: SheqRecord['status'] }) {
+  const s = sheqStatusStyles[status]
+  return <span className={`pill ${s.c}`}>{s.label}</span>
 }
 
 const equipStatusStyles: Record<EquipmentStatus, { c: string; label: string }> = {

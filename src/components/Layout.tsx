@@ -49,6 +49,16 @@ const navByRole: Record<Role, NavItem[]> = {
     { to: '/sheq/record', label: 'New SHEQ Record', icon: <ClipboardList className="h-5 w-5" /> },
     { to: '/sheq/tsf-limits', label: 'TSF Limits', icon: <Droplets className="h-5 w-5" /> },
   ],
+  sheq_manager: [
+    { to: '/sheq-manager', label: 'SHEQ Oversight', icon: <ShieldCheck className="h-5 w-5" /> },
+    { to: '/sheq-manager/records', label: 'Submitted Records', icon: <CalendarDays className="h-5 w-5" /> },
+    { to: '/sheq', label: 'SHEQ Register', icon: <ClipboardList className="h-5 w-5" /> },
+    { to: '/sheq/tsf-limits', label: 'TSF Limits', icon: <Droplets className="h-5 w-5" /> },
+  ],
+  ops_manager: [
+    { to: '/ops-manager', label: 'Operations Overview', icon: <Gauge className="h-5 w-5" /> },
+    { to: '/ops-manager/reports', label: 'Submitted Reports', icon: <CalendarDays className="h-5 w-5" /> },
+  ],
   project: [
     { to: '/project', label: 'Project Overview', icon: <Gauge className="h-5 w-5" /> },
   ],
@@ -66,8 +76,10 @@ const navByRole: Record<Role, NavItem[]> = {
 
 const roleLabels: Record<Role, string> = {
   supervisor: 'Site Supervisor',
+  ops_manager: 'Operations Manager',
   workshop: 'Workshop Manager',
   sheq: 'SHEQ Officer',
+  sheq_manager: 'SHEQ Manager',
   project: 'Project Manager',
   executive: 'Executive',
   client: 'Client Portal',

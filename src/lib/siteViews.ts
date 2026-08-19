@@ -27,7 +27,7 @@ export interface SiteView {
   compliance: number
 }
 
-/** A short code from the site name: "Golden Valley Mine" -> "GVM". */
+/** A short code from the site name: "North Ridge Mine" -> "NRM". */
 export function siteCode(name: string): string {
   const words = name.replace(/[^a-zA-Z0-9 ]/g, '').split(/\s+/).filter(Boolean)
   const letters = words.map((w) => w[0]!.toUpperCase()).join('')

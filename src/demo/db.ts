@@ -73,6 +73,8 @@ export interface DemoReport {
   siteId: string
   date: string // yyyy-mm-dd
   createdAt: string
+  /** users.id of the supervisor who submitted it; null when unattributed. */
+  supervisorId: string | null
   tonnesProcessed: number
   actual: number
   target: number
@@ -131,7 +133,7 @@ export interface DemoUser {
   id: string
   email: string
   fullName: string
-  role: 'supervisor' | 'workshop' | 'sheq' | 'project' | 'executive' | 'client'
+  role: 'supervisor' | 'ops_manager' | 'workshop' | 'sheq' | 'sheq_manager' | 'project' | 'executive' | 'client'
   siteId: string | null
   title: string
 }
@@ -178,6 +180,12 @@ const SITE_BIAS: Record<string, number> = {
 }
 const WEATHER_POOL = ['Clear', 'Clear', 'Overcast', 'Light Rain', 'Clear', 'Overcast', 'Heavy Rain']
 
+// Which supervisor submits each site's daily report (see `users` seed below).
+const SITE_SUPERVISORS: Record<string, string> = {
+  'site-north': 'u-super', 'site-falcon': 'u-super-falcon',
+  'site-silver': 'u-super-silver', 'site-east': 'u-super-east',
+}
+
 export const reports: DemoReport[] = []
 
 for (const siteId of MINE_SITES) {
@@ -194,6 +202,7 @@ for (const siteId of MINE_SITES) {
       siteId,
       date,
       createdAt: `${date}T06:${String(Math.floor(between(10, 50))).padStart(2, '0')}:00Z`,
+      supervisorId: SITE_SUPERVISORS[siteId] ?? null,
       tonnesProcessed: Math.round(actual * between(1.02, 1.1)),
       actual,
       target,
@@ -308,14 +317,76 @@ export const breakdowns: BreakdownReport[] = [
 // ── Seed: SHEQ & certificates ────────────────────────────────────────────────
 
 export const sheqRecords: SheqRecord[] = [
-  { id: newId('sh'), type: 'incident',          siteId: 'site-east',   title: 'Minor hand laceration during screen change', severity: 'medium', status: 'open',        date: isoDaysAgo(1),  raisedBy: 'Grace Okafor', attachments: 1 },
-  { id: newId('sh'), type: 'environmental',     siteId: 'site-falcon', title: 'Quarterly TSF seepage & dust monitoring',     severity: 'high',   status: 'overdue',     date: isoDaysAgo(9),  raisedBy: 'Grace Okafor', attachments: 2 },
-  { id: newId('sh'), type: 'inspection',        siteId: 'site-north',  title: 'Monthly pipeline corridor walkdown',          severity: 'low',    status: 'closed',      date: isoDaysAgo(3),  raisedBy: 'Grace Okafor', attachments: 0 },
-  { id: newId('sh'), type: 'near_miss',         siteId: 'site-north',  title: 'Reversing tipper near light vehicle at berm', severity: 'high',   status: 'in_progress', date: isoDaysAgo(4),  raisedBy: 'Tendai M.',    attachments: 0 },
-  { id: newId('sh'), type: 'toolbox_talk',      siteId: 'site-silver', title: 'Working near water: rescue readiness',        severity: 'low',    status: 'closed',      date: isoDaysAgo(2),  raisedBy: 'Site crew',    attachments: 0 },
-  { id: newId('sh'), type: 'corrective_action', siteId: 'site-falcon', title: 'Install secondary containment at fuel bay',   severity: 'high',   status: 'in_progress', date: isoDaysAgo(11), raisedBy: 'Grace Okafor', attachments: 1 },
-  { id: newId('sh'), type: 'audit',             siteId: 'site-north',  title: 'External ISO 45001 surveillance audit',       severity: 'medium', status: 'closed',      date: isoDaysAgo(16), raisedBy: 'Grace Okafor', attachments: 3 },
+  { id: newId('sh'), type: 'incident',          siteId: 'site-east',   title: 'Minor hand laceration during screen change', severity: 'medium', status: 'open',        date: isoDaysAgo(1),  raisedBy: 'Grace Okafor', raisedById: 'u-sheq',       attachments: 1 },
+  { id: newId('sh'), type: 'environmental',     siteId: 'site-falcon', title: 'Quarterly TSF seepage & dust monitoring',     severity: 'high',   status: 'overdue',     date: isoDaysAgo(9),  raisedBy: 'Ravi Patel',   raisedById: 'u-sheq-falcon', attachments: 2 },
+  { id: newId('sh'), type: 'inspection',        siteId: 'site-north',  title: 'Monthly pipeline corridor walkdown',          severity: 'low',    status: 'closed',      date: isoDaysAgo(3),  raisedBy: 'Grace Okafor', raisedById: 'u-sheq',       attachments: 0 },
+  { id: newId('sh'), type: 'near_miss',         siteId: 'site-north',  title: 'Reversing tipper near light vehicle at berm', severity: 'high',   status: 'in_progress', date: isoDaysAgo(4),  raisedBy: 'Tendai M.',    raisedById: 'u-super',      attachments: 0 },
+  // Deliberately unattributed, to show the "no officer recorded" path.
+  { id: newId('sh'), type: 'toolbox_talk',      siteId: 'site-silver', title: 'Working near water: rescue readiness',        severity: 'low',    status: 'closed',      date: isoDaysAgo(2),  raisedBy: 'Site crew',    raisedById: null,           attachments: 0 },
+  { id: newId('sh'), type: 'corrective_action', siteId: 'site-falcon', title: 'Install secondary containment at fuel bay',   severity: 'high',   status: 'in_progress', date: isoDaysAgo(11), raisedBy: 'Ravi Patel',   raisedById: 'u-sheq-falcon', attachments: 1 },
+  { id: newId('sh'), type: 'audit',             siteId: 'site-north',  title: 'External ISO 45001 surveillance audit',       severity: 'medium', status: 'closed',      date: isoDaysAgo(16), raisedBy: 'Grace Okafor', raisedById: 'u-sheq',       attachments: 3 },
 ]
+
+/** Full text of each seeded SHEQ record, for the manager's read-through view. */
+export interface DemoSheqDetail {
+  description: string | null
+  findings: string | null
+  correctiveAction: string | null
+  dueDate: string | null
+  attachmentNames: string[]
+}
+
+export const sheqDetails = new Map<string, DemoSheqDetail>([
+  [sheqRecords[0].id, {
+    description: 'Fitter sustained a shallow cut to the left palm while changing a vibrating screen panel. First aid administered on site; no lost time.',
+    findings: 'Cut-resistant gloves were available but not worn for this task. Panel edges are sharper than the task risk assessment assumes.',
+    correctiveAction: 'Reissue glove standard for screen work and update the task risk assessment. Toolbox talk scheduled for all plant crews.',
+    dueDate: isoDaysAgo(-6),
+    attachmentNames: ['first-aid-register-entry.pdf'],
+  }],
+  [sheqRecords[1].id, {
+    description: 'Quarterly seepage and dust monitoring round for the Main TSF, covering downstream boreholes and perimeter dust buckets.',
+    findings: 'Sampling round not completed in the quarter. Two downstream boreholes remain unsampled.',
+    correctiveAction: 'Complete the outstanding boreholes and lodge results with the environmental agency. Standing calendar entry created.',
+    dueDate: isoDaysAgo(2),
+    attachmentNames: ['monitoring-schedule.pdf', 'borehole-map.png'],
+  }],
+  [sheqRecords[2].id, {
+    description: 'Monthly walkdown of the tailings pipeline corridor from the plant to TSF 1 and TSF 2.',
+    findings: 'No leaks or wet spots. Two pipe supports flagged for corrosion re-coating next shutdown.',
+    correctiveAction: null,
+    dueDate: null,
+    attachmentNames: [],
+  }],
+  [sheqRecords[3].id, {
+    description: 'Tipper reversed towards a parked light vehicle at the TSF berm; spotter stopped the movement. No contact.',
+    findings: 'Reversing camera obscured by dust; light vehicle parked inside the exclusion zone.',
+    correctiveAction: 'Re-mark the exclusion zone and brief all drivers. Camera cleaning added to pre-start checklist.',
+    dueDate: isoDaysAgo(-3),
+    attachmentNames: [],
+  }],
+  [sheqRecords[4].id, {
+    description: 'Toolbox talk on rescue readiness for crews working near the return water dam: lifebuoy positions, buddy rules, emergency numbers.',
+    findings: null,
+    correctiveAction: null,
+    dueDate: null,
+    attachmentNames: [],
+  }],
+  [sheqRecords[5].id, {
+    description: 'Secondary containment required at the Falcon Creek fuel bay following the January facility audit.',
+    findings: 'Bund walls delivered; civil work approximately 60% complete.',
+    correctiveAction: 'Complete bund installation and closeout inspection with the auditor.',
+    dueDate: isoDaysAgo(-10),
+    attachmentNames: ['audit-extract.pdf'],
+  }],
+  [sheqRecords[6].id, {
+    description: 'External ISO 45001 surveillance audit across North Ridge operations.',
+    findings: 'Certificate maintained. Two minor findings: contractor induction records and lifting gear register gaps.',
+    correctiveAction: 'Both minor findings closed with evidence submitted to the certification body.',
+    dueDate: null,
+    attachmentNames: ['audit-report.pdf', 'finding-1-evidence.pdf', 'finding-2-evidence.pdf'],
+  }],
+])
 
 function certStatus(expiryDate: string, reminderDays: number): Certificate['status'] {
   const days = Math.ceil((new Date(expiryDate).getTime() - Date.now()) / 86400000)
@@ -383,10 +454,16 @@ export const clientDocs: DemoDoc[] = [
 // ── Seed: user accounts (demo personas) ───────────────────────────────────────
 
 export const users: DemoUser[] = [
-  { id: 'u-exec',   email: 'exec@sitecommand.demo',       fullName: 'Alex Morgan',   role: 'executive',  siteId: null,         title: 'Managing Director' },
-  { id: 'u-pm',     email: 'projects@sitecommand.demo',   fullName: 'Priya Naidoo',  role: 'project',    siteId: null,         title: 'Project Manager' },
-  { id: 'u-work',   email: 'workshop@sitecommand.demo',   fullName: 'Daniel Kim',    role: 'workshop',   siteId: null,         title: 'Workshop Manager' },
-  { id: 'u-sheq',   email: 'sheq@sitecommand.demo',       fullName: 'Grace Okafor',  role: 'sheq',       siteId: null,         title: 'SHEQ Officer' },
-  { id: 'u-super',  email: 'supervisor@sitecommand.demo', fullName: 'Tendai M.',     role: 'supervisor', siteId: 'site-north', title: 'Site Supervisor — North Ridge' },
-  { id: 'u-client', email: 'client@northwind.demo',       fullName: 'Jordan Reeve',  role: 'client',     siteId: 'site-north', title: 'Client — Northwind Resources' },
+  { id: 'u-exec',         email: 'exec@sitecommand.demo',        fullName: 'Alex Morgan',   role: 'executive',    siteId: null,          title: 'Managing Director' },
+  { id: 'u-ops',          email: 'operations@sitecommand.demo',  fullName: 'Sofia Reyes',   role: 'ops_manager',  siteId: null,          title: 'Operations Manager' },
+  { id: 'u-pm',           email: 'projects@sitecommand.demo',    fullName: 'Priya Naidoo',  role: 'project',      siteId: null,          title: 'Project Manager' },
+  { id: 'u-work',         email: 'workshop@sitecommand.demo',    fullName: 'Daniel Kim',    role: 'workshop',     siteId: null,          title: 'Workshop Manager' },
+  { id: 'u-sheq',         email: 'sheq@sitecommand.demo',        fullName: 'Grace Okafor',  role: 'sheq',         siteId: null,          title: 'SHEQ Officer' },
+  { id: 'u-sheq-falcon',  email: 'sheq.falcon@sitecommand.demo', fullName: 'Ravi Patel',    role: 'sheq',         siteId: 'site-falcon', title: 'SHEQ Officer — Falcon Creek' },
+  { id: 'u-sheq-mgr',     email: 'sheq.manager@sitecommand.demo', fullName: 'Amara Osei',   role: 'sheq_manager', siteId: null,          title: 'SHEQ Manager' },
+  { id: 'u-super',        email: 'supervisor@sitecommand.demo',  fullName: 'Tendai M.',     role: 'supervisor',   siteId: 'site-north',  title: 'Site Supervisor — North Ridge' },
+  { id: 'u-super-falcon', email: 'falcon@sitecommand.demo',      fullName: 'Marcus Vale',   role: 'supervisor',   siteId: 'site-falcon', title: 'Site Supervisor — Falcon Creek' },
+  { id: 'u-super-silver', email: 'silver@sitecommand.demo',      fullName: 'Lena Fischer',  role: 'supervisor',   siteId: 'site-silver', title: 'Site Supervisor — Silver Plains' },
+  { id: 'u-super-east',   email: 'eastgate@sitecommand.demo',    fullName: 'Owen Blake',    role: 'supervisor',   siteId: 'site-east',   title: 'Site Supervisor — Eastgate' },
+  { id: 'u-client',       email: 'client@northwind.demo',        fullName: 'Jordan Reeve',  role: 'client',       siteId: 'site-north',  title: 'Client — Northwind Resources' },
 ]
